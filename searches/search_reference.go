@@ -18,7 +18,7 @@ func GetSearchReference(ctx context.Context, reference string, vrm string) (sref
 
 	defer client.Close()
 
-	doci := client.Collection("searches").Where("your_reference", "==", reference).Where("vrm", "==", vrm).Documents(ctx)
+	doci := client.Collection("searches").Where("result.your_reference", "==", reference).Where("result.vrm", "==", vrm).Documents(ctx)
 
 	for {
 		doc, err := doci.Next()
