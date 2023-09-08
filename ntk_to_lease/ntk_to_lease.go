@@ -13,8 +13,8 @@ import (
 
 type Package struct {
 	SearchReference string      `json:"sref"`
-	Source          string      `json:"source"`
 	Created         time.Time   `json:"created"`
+	Source          string      `json:"source"`
 	Data            interface{} `json:"data"`
 }
 
