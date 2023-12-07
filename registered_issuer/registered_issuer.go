@@ -4,6 +4,7 @@ import (
 	"cloud.google.com/go/firestore"
 	"context"
 	"errors"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
 )
@@ -46,6 +47,6 @@ func IsRegistered(ctx context.Context, operatorname string) (registeredUser Issu
 	if isserFound {
 		return registeredUser, nil
 	} else {
-		return registeredUser, ErrIssuerIsNotRegistered
+		return registeredUser, fmt.Errorf("%w - %s", ErrIssuerIsNotRegistered, operatorname)
 	}
 }

@@ -4,9 +4,12 @@ import (
 	"cloud.google.com/go/firestore"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/transfer360/sys360/publish"
 	"github.com/transfer360/sys360/registered_issuer"
+	"google.golang.org/api/iterator"
 )
 
 func UpdateClientOnSearch(ctx context.Context, sref string, issuer registered_issuer.Issuer) (err error) {
@@ -28,7 +31,26 @@ func UpdateClientOnSearch(ctx context.Context, sref string, issuer registered_is
 		IssuerID: issuer.Issuer,
 	}
 
-	_, err = client.Collection("searches").Doc(sref).Update(ctx, []firestore.Update{
+	itr := client.Collection("searches").Where("sref", "==", sref).Documents(ctx)
+
+	documentID := ""
+
+	for {
+		doc, err := itr.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+		if doc.Exists() {
+			documentID = doc.Ref.ID
+			break
+		}
+	}
+
+	if len(documentID) == 0 {
+		return fmt.Errorf("search not found with Sref: %s", sref)
+	}
+
+	_, err = client.Collection("searches").Doc(documentID).Update(ctx, []firestore.Update{
 		{
 			Path:  "client",
 			Value: clientInfo,
