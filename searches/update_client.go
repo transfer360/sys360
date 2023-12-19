@@ -31,7 +31,7 @@ func UpdateClientOnSearch(ctx context.Context, sref string, issuer registered_is
 		IssuerID: issuer.Issuer,
 	}
 
-	itr := client.Collection("searches").Where("sref", "==", sref).Documents(ctx)
+	itr := client.Collection("searches").Where("sref", "==", sref).Where("result.is_hirer_vehicle", "==", true).Documents(ctx)
 
 	documentID := ""
 
