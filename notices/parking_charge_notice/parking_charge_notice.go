@@ -25,6 +25,12 @@ type Data struct {
 		URL      string `json:"url" firestore:"url"`
 		Received string `json:"-" firestore:"received"`
 	} `json:"notice_to_keeper" firestore:"notice_to_keeper"`
+	Letter struct {
+		File     string `json:"file" firestore:"-"`
+		URL      string `json:"url" firestore:"url"`
+		Received string `json:"-" firestore:"received"`
+		Type     int    `json:"type" firestore:"type"`
+	} `json:"letter" firestore:"letter"`
 	Pofa              bool     `json:"pofa" firestore:"pofa"`
 	TotalDue          float64  `json:"total_due" firestore:"total_due"`
 	ReducedAmount     float64  `json:"reduced_amount" firestore:"reduced_amount"`
