@@ -47,6 +47,7 @@ func AddressValidation(address []string, postCode string) (Address, error) {
 
 	addressURL := strings.Join(address, " ")
 	addressURL = strings.ReplaceAll(addressURL, ",", "")
+	addressURL = fmt.Sprintf("%s %s", addressURL, postCode)
 	addressURL = strings.ReplaceAll(addressURL, " ", "%20")
 
 	mapsResponse, err := http.Get(fmt.Sprintf("https://maps.googleapis.com/maps/api/geocode/json?key=%s&address=%s", os.Getenv("MAP_KEY"), addressURL))

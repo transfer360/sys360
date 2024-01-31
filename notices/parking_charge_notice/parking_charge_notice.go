@@ -4,6 +4,7 @@ type Data struct {
 	Source                string `json:"source" firestore:"-"`
 	DocumentID            string `json:"-" firestore:"-"`
 	SearchReference       string `json:"sref" firestore:"sref"`
+	OperatorName          string `json:"operator_name" firestore:"operator_name"`
 	NoticeType            string `json:"-" firestore:"notice_type"`
 	NoticeTkn             string `json:"notice_tkn" firestore:"notice_tkn"`
 	NoticeNumber          string `json:"notice_number" firestore:"notice_number"`
@@ -33,4 +34,13 @@ type Data struct {
 	AppealURL         string   `json:"appeal_url,omitempty" firestore:"appeal_url,omitempty"`
 	IssuerID          string   `json:"-" firestore:"-"`
 	FleetID           int      `json:"-" firestore:"-"`
+	System            struct {
+		IgnoreNoticeExistsCheck bool /* Ignore the has already been uploaded check */
+		NoticeUpload            struct {
+			ResendNotice      bool
+			NoticeDocumentID  string
+			NoticeTkn         string
+			SaveSearchDocment bool
+		}
+	}
 }
