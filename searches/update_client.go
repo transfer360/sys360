@@ -3,12 +3,11 @@ package searches
 import (
 	"cloud.google.com/go/firestore"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/transfer360/sys360/publish"
 	"github.com/transfer360/sys360/registered_issuer"
+	"github.com/transfer360/sys360/sys_updates"
 	"google.golang.org/api/iterator"
 )
 
@@ -66,27 +65,16 @@ func UpdateClientOnSearch(ctx context.Context, sref string, issuer registered_is
 	// Update sys_update
 	// ------------------------------------------------------------------
 
-	attr := make(map[string]string)
-	attr["update"] = "change_issuer"
-
-	payload, err := json.Marshal(struct {
-		Sref     string `json:"sref"`
-		ClientID string `json:"client_id"`
-	}{
+	newi := sys_updates.ChangeIssuer{
 		Sref:     sref,
 		ClientID: clientInfo.ClientID,
-	})
-
-	if err != nil {
-		log.Warnln("Creating Packet for sys_updates:", err)
-	} else {
-
-		err = publish.Push(ctx, "transfer-360", "sys_updates", payload, attr)
-
-		if err != nil {
-			log.Warnln("Pushing Packet for sys_updates:", err)
-		}
 	}
+
+	err = newi.Update(ctx)
+	if err != nil {
+		log.Warnln("Pushing Packet for sys_updates:", err)
+	}
+
 	// ------------------------------------------------------------------
 
 	return nil

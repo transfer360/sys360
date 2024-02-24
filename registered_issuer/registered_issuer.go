@@ -31,16 +31,22 @@ func IsRegistered(ctx context.Context, operatorname string) (registeredUser Issu
 	for {
 		doc, err := itr.Next()
 
-		if errors.Is(err, iterator.Done) {
-			break
-		}
-
-		err = doc.DataTo(&registeredUser)
 		if err != nil {
-			log.Error("IsRegistered:", err)
-			return registeredUser, err
+			if errors.Is(err, iterator.Done) {
+				break
+			} else {
+				log.Errorln(err)
+				return registeredUser, err
+			}
 		} else {
-			isserFound = true
+
+			err = doc.DataTo(&registeredUser)
+			if err != nil {
+				log.Error("IsRegistered:", err)
+				return registeredUser, err
+			} else {
+				isserFound = true
+			}
 		}
 	}
 
