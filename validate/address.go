@@ -1,10 +1,13 @@
 package validate
 
 import (
+	"cloud.google.com/go/firestore"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/api/iterator"
 	"net/http"
 	"os"
 	"strings"
@@ -37,6 +40,77 @@ type Address struct {
 	Postcode     string
 }
 
+type BadAddress struct {
+	CompanyName  string `firestore:"company_name"`
+	AddressLine1 string `firestore:"addressline1"`
+	AddressLine2 string `firestore:"addressline2"`
+	AddressLine3 string `firestore:"addressline3"`
+	AddressLine4 string `firestore:"addressline4"`
+	Postcode     string `firestore:"postcode"`
+}
+
+var ErrAddressNotfound = errors.New("address not found")
+
+func BadAddressLookUp(ctx context.Context, companyName string, PostCode string) (Address, error) {
+
+	addr := Address{}
+	baddr := BadAddress{}
+
+	client, err := firestore.NewClient(ctx, "transfer-360")
+	if err != nil {
+		fmt.Errorf("Failed to create client: %v\n", err)
+		return addr, err
+	}
+	// Ensure the context isn't canceled
+	defer client.Close()
+
+	var badAddressFound bool
+
+	itr := client.Collection("bad_addresses").Where("company_name", "==", companyName).Where("postcode", "==", PostCode).Limit(1).Documents(ctx)
+	for {
+		doc, err := itr.Next()
+		if err != nil {
+			if errors.Is(err, iterator.Done) {
+				break
+			} else {
+				log.Errorln("BadAddress: %v", err)
+				return addr, err
+			}
+		} else {
+			err = doc.DataTo(&baddr)
+			if err != nil {
+				log.Errorln("BadAddress: %v", err)
+				return addr, err
+			} else {
+				badAddressFound = true
+				break
+			}
+		}
+	}
+
+	if !badAddressFound {
+		return addr, ErrAddressNotfound
+	}
+
+	addr.AddressLine1 = baddr.AddressLine1
+	addr.AddressLine2 = baddr.AddressLine2
+	addr.AddressLine3 = baddr.AddressLine3
+	addr.City = baddr.AddressLine4
+	addr.Postcode = baddr.Postcode
+
+	if len(addr.City) == 0 {
+		if len(addr.AddressLine3) > 0 {
+			addr.City = addr.AddressLine3
+			addr.AddressLine3 = ""
+		} else if len(addr.AddressLine2) > 0 {
+			addr.City = addr.AddressLine2
+			addr.AddressLine2 = ""
+		}
+	}
+
+	return addr, nil
+}
+
 func AddressValidation(address []string, postCode string) (Address, error) {
 
 	addr := Address{}
@@ -49,6 +123,10 @@ func AddressValidation(address []string, postCode string) (Address, error) {
 	addressURL = strings.ReplaceAll(addressURL, ",", "")
 	addressURL = fmt.Sprintf("%s %s", addressURL, postCode)
 	addressURL = strings.ReplaceAll(addressURL, " ", "%20")
+
+	/*
+		Redmond%20King%20County%20Durham%20SR8%202RR
+	*/
 
 	mapsResponse, err := http.Get(fmt.Sprintf("https://maps.googleapis.com/maps/api/geocode/json?key=%s&address=%s", os.Getenv("MAP_KEY"), addressURL))
 
@@ -69,7 +147,25 @@ func AddressValidation(address []string, postCode string) (Address, error) {
 
 			if mapInfo.Status == "OK" {
 
-				for _, ar := range mapInfo.Results[0].AddressComponents {
+				ukMapID := 0
+
+				for i, ac := range mapInfo.Results {
+					if ukMapID > 0 {
+						break
+					}
+					for _, ac := range ac.AddressComponents {
+						for _, art := range ac.Types {
+							if art == "country" {
+								if ac.ShortName == "GB" {
+									ukMapID = i
+									break
+								}
+							}
+						}
+					}
+				}
+
+				for _, ar := range mapInfo.Results[ukMapID].AddressComponents {
 					for _, art := range ar.Types {
 
 						switch art {
@@ -143,6 +239,24 @@ func AddressLineValidation(address string, postCode string) (Address, error) {
 		} else {
 
 			if mapInfo.Status == "OK" {
+
+				ukMapID := 0
+
+				for i, ac := range mapInfo.Results {
+					if ukMapID > 0 {
+						break
+					}
+					for _, ac := range ac.AddressComponents {
+						for _, art := range ac.Types {
+							if art == "country" {
+								if ac.ShortName == "GB" {
+									ukMapID = i
+									break
+								}
+							}
+						}
+					}
+				}
 
 				for _, ar := range mapInfo.Results[0].AddressComponents {
 					for _, art := range ar.Types {
