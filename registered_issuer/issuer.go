@@ -88,7 +88,11 @@ func (i Issuer) Create(ctx context.Context, softwareProvider int) (Issuer, error
 
 	for {
 
-		t360ID = fmt.Sprintf("%s%s%d", preFix, strings.ReplaceAll(ni.Issuer[:4], " ", ""), counter)
+		t360ID = ni.Issuer
+
+		if len(ni.Issuer) >= 4 {
+			t360ID = fmt.Sprintf("%s%s%d", preFix, strings.ReplaceAll(ni.Issuer[:4], " ", ""), counter)
+		}
 
 		exists, err := T360IdExists(ctx, t360ID)
 		if err != nil {

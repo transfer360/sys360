@@ -9,4 +9,5 @@ type Data struct {
 	NTKUrl    string `json:"ntk,omitempty"`
 	AppealURL string `json:"appeal_url,omitempty"`
 	PayURL    string `json:"pay_url,omitempty"`
+	Site      string `json:"site,omitempty"`
 }
