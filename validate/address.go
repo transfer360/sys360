@@ -111,7 +111,7 @@ func BadAddressLookUp(ctx context.Context, companyName string, PostCode string) 
 	return addr, nil
 }
 
-func AddressValidation(address []string, postCode string) (Address, error) {
+func AddressValidation(sref string, address []string, postCode string) (Address, error) {
 
 	addr := Address{}
 
@@ -127,6 +127,8 @@ func AddressValidation(address []string, postCode string) (Address, error) {
 	/*
 		Redmond%20King%20County%20Durham%20SR8%202RR
 	*/
+
+	log.Debugf("[%s] AddressValidation: %s", sref, addressURL)
 
 	mapsResponse, err := http.Get(fmt.Sprintf("https://maps.googleapis.com/maps/api/geocode/json?key=%s&address=%s", os.Getenv("MAP_KEY"), addressURL))
 
@@ -165,8 +167,15 @@ func AddressValidation(address []string, postCode string) (Address, error) {
 					}
 				}
 
+				djson, err := json.Marshal(mapInfo.Results[ukMapID].AddressComponents)
+				if err == nil {
+					log.Debugf("[%s] AddressValidation:Return:%s", sref, djson)
+				}
+
 				for _, ar := range mapInfo.Results[ukMapID].AddressComponents {
 					for _, art := range ar.Types {
+
+						log.Debugf("[%s] AddressValidation:Return:[%s] %s", sref, art, ar.LongName)
 
 						switch art {
 						case "street_number":
@@ -192,15 +201,24 @@ func AddressValidation(address []string, postCode string) (Address, error) {
 						case "postal_code":
 							addr.Postcode = ar.LongName
 							break
+						default:
+							log.Debugf("[%s] AddressValidation:UNKNOWN:Return:[%s] %s", sref, art, ar.LongName)
 						}
 
 					}
 				}
 
 				// 28.11 - Override post code due to part post code being returned.
-				if len(postCode) > 0 {
-					addr.Postcode = postCode
+				if !strings.Contains(addr.Postcode, " ") && len(postCode) > 0 {
+					addr.Postcode = strings.TrimSpace(addr.Postcode)
 				}
+
+				log.Debugf("[%s] AddressValidation:Return:AddressLine1 %s", sref, addr.AddressLine1)
+				log.Debugf("[%s] AddressValidation:Return:AddressLine2 %s", sref, addr.AddressLine2)
+				log.Debugf("[%s] AddressValidation:Return:AddressLine3 %s", sref, addr.AddressLine3)
+				log.Debugf("[%s] AddressValidation:Return:City %s", sref, addr.City)
+				log.Debugf("[%s] AddressValidation:Return:Postcode %s", sref, addr.Postcode)
+				log.Debugf("[%s] AddressValidation:Return:Country %s", sref, addr.Country)
 
 				return addr, nil
 
