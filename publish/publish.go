@@ -26,3 +26,25 @@ func Push(ctx context.Context, project string, topicName string, payloadData []b
 
 	return nil
 }
+
+func PushWithOrderingKey(ctx context.Context, project string, topicName string, payloadData []byte, attr map[string]string, OrderingKey string) error {
+
+	client, err := pubsub.NewClient(ctx, project)
+	if err != nil {
+		return fmt.Errorf("there was an error creating pub/sub client: %w", err)
+	}
+
+	topic := client.Topic(topicName)
+
+	msg := &pubsub.Message{
+		Data:        payloadData,
+		Attributes:  attr,
+		OrderingKey: OrderingKey,
+	}
+
+	if _, err := topic.Publish(ctx, msg).Get(ctx); err != nil {
+		return fmt.Errorf("there was an error sending the payloadData: %w", err)
+	}
+
+	return nil
+}
