@@ -22,6 +22,23 @@ type Data struct {
 
 func (d *Data) Send(ctx context.Context) error {
 
+	if len(d.Sref) == 0 {
+		return fmt.Errorf("missing sref")
+	}
+	if len(d.ClientID) == 0 {
+		return fmt.Errorf("missing client_id")
+	}
+	if d.ScanForUpdate.IsZero() {
+		return fmt.Errorf("missing scan_for_update")
+	}
+	if d.FleetID == 0 {
+		return fmt.Errorf("missing fleet_id")
+	}
+
+	if d.NoticeType == 0 {
+		d.NoticeType = 1
+	}
+
 	payload, err := json.Marshal(d)
 	if err != nil {
 		log.Errorln("error marshaling data:", err)
