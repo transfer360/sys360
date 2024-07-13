@@ -35,6 +35,7 @@ func PushWithOrderingKey(ctx context.Context, project string, topicName string, 
 	}
 
 	topic := client.Topic(topicName)
+	topic.EnableMessageOrdering = true
 
 	msg := &pubsub.Message{
 		Data:        payloadData,
