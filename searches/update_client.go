@@ -70,7 +70,7 @@ func UpdateClientOnSearch(ctx context.Context, sref string, issuer registered_is
 		ClientID: clientInfo.ClientID,
 	}
 
-	err = newi.Update(ctx)
+	err = newi.Update(ctx, fmt.Sprintf("sys360:UpdateClientOnSearch:%s", sref))
 	if err != nil {
 		log.Warnln("Pushing Packet for sys_updates:", err)
 	}

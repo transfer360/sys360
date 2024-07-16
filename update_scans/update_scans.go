@@ -10,14 +10,14 @@ import (
 )
 
 type Data struct {
-	Sref          string    `json:"sref,omitempty"`
-	ClientID      string    `json:"client_id,omitempty"`
-	ScanForUpdate time.Time `json:"scan_for_update"`
-	Status        int       `json:"status,omitempty"`
-	DocumentID    string    `json:"document_id,omitempty"`
-	FleetID       int       `json:"fleet_id,omitempty"`
-	NoticeType    int       `json:"notice_type,omitempty"`
-	Source        string    `json:"source,omitempty"`
+	Sref          string    `json:"sref,omitempty" bson:"sref"`
+	ClientID      string    `json:"client_id,omitempty" bson:"client_id"`
+	ScanForUpdate time.Time `json:"scan_for_update" bson:"scan_for_update"`
+	Status        int       `json:"status,omitempty" bson:"status"`
+	DocumentID    string    `json:"document_id,omitempty" bson:"document_id"`
+	FleetID       int       `json:"fleet_id,omitempty" bson:"fleet_id"`
+	NoticeType    int       `json:"notice_type,omitempty" bson:"notice_type"`
+	Source        string    `json:"source,omitempty" bson:"source"`
 }
 
 func (d *Data) Send(ctx context.Context) error {

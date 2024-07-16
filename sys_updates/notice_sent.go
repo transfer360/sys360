@@ -14,10 +14,11 @@ type NoticeSent struct {
 	ScanForUpdate string `json:"scan_for_update"`
 }
 
-func (n *NoticeSent) Update(ctx context.Context) error {
+func (n *NoticeSent) Update(ctx context.Context, source string) error {
 
 	attr := make(map[string]string)
 	attr["update"] = "parking_charge_notice"
+	attr["source"] = source
 
 	payload, err := json.Marshal(n)
 	if err != nil {

@@ -11,14 +11,13 @@ import (
 type NoticeStatusChange struct {
 	Sref       string `json:"sref"`
 	StatusCode int    `json:"status_code"`
-	Source     string `json:"source"`
 }
 
-func (nsc *NoticeStatusChange) Update(ctx context.Context) error {
+func (nsc *NoticeStatusChange) Update(ctx context.Context, source string) error {
 
 	attr := make(map[string]string)
 	attr["update"] = "notice_status_change"
-	attr["source"] = nsc.Source
+	attr["source"] = source
 
 	payload, err := json.Marshal(nsc)
 	if err != nil {
