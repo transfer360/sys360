@@ -24,7 +24,7 @@ func IsRegistered(ctx context.Context, operatorname string) (registeredUser Issu
 
 	defer client.Close()
 
-	itr := client.Collection(REGISTERED_OPERATOR_COLLECTION).Where("issuer", "==", operatorname).Documents(ctx)
+	itr := client.Collection(REGISTERED_OPERATOR_COLLECTION).Where("issuer", "==", operatorname).Where("software_provider", "==", 2).Documents(ctx)
 
 	isserFound := false
 
@@ -46,6 +46,7 @@ func IsRegistered(ctx context.Context, operatorname string) (registeredUser Issu
 				return registeredUser, err
 			} else {
 				isserFound = true
+				break
 			}
 		}
 	}

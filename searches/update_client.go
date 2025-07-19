@@ -11,6 +11,21 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+//func searchZatparkSearch(ctx context.Context, sref string) {
+//
+//	client, err := firestore.NewClient(ctx, "transfer-360")
+//
+//	if err != nil {
+//		log.Error("UpdateClientOnSearch:", err)
+//		return err
+//	}
+//
+//	defer client.Close()
+//
+//}
+
+var ErrorSearchNotFound = errors.New("search not found")
+
 func UpdateClientOnSearch(ctx context.Context, sref string, issuer registered_issuer.Issuer) (err error) {
 
 	client, err := firestore.NewClient(ctx, "transfer-360")
@@ -36,17 +51,20 @@ func UpdateClientOnSearch(ctx context.Context, sref string, issuer registered_is
 
 	for {
 		doc, err := itr.Next()
-		if errors.Is(err, iterator.Done) {
-			break
-		}
-		if doc.Exists() {
+		if err != nil {
+			if errors.Is(err, iterator.Done) {
+				break
+			} else {
+				log.Errorf("UpdateClientOnSearch iterating document. err=%v", err)
+			}
+		} else {
 			documentID = doc.Ref.ID
 			break
 		}
 	}
 
 	if len(documentID) == 0 {
-		return fmt.Errorf("search not found with Sref: %s", sref)
+		return fmt.Errorf("%w [%s]", ErrorSearchNotFound, sref)
 	}
 
 	_, err = client.Collection("searches").Doc(documentID).Update(ctx, []firestore.Update{
