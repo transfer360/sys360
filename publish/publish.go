@@ -1,51 +1,74 @@
 package publish
 
 import (
-	"cloud.google.com/go/pubsub"
 	"context"
 	"fmt"
+	"sync"
+
+	"cloud.google.com/go/pubsub"
 )
 
-func Push(ctx context.Context, project string, topicName string, payloadData []byte, attr map[string]string) error {
+var (
+	clients   = make(map[string]*pubsub.Client)
+	clientsMu sync.RWMutex
+)
 
-	client, err := pubsub.NewClient(ctx, project)
+func getClient(ctx context.Context, project string) (*pubsub.Client, error) {
+	clientsMu.RLock()
+	client, ok := clients[project]
+	clientsMu.RUnlock()
+	if ok {
+		return client, nil
+	}
+
+	clientsMu.Lock()
+	defer clientsMu.Unlock()
+
+	// Double-check after acquiring write lock
+	if client, ok = clients[project]; ok {
+		return client, nil
+	}
+
+	var err error
+	client, err = pubsub.NewClient(ctx, project)
 	if err != nil {
-		return fmt.Errorf("there was an error creating pub/sub client: %w", err)
+		return nil, fmt.Errorf("error creating pub/sub client: %w", err)
+	}
+	clients[project] = client
+	return client, nil
+}
+
+func Push(ctx context.Context, project string, topicName string, payloadData []byte, attr map[string]string) error {
+	client, err := getClient(ctx, project)
+	if err != nil {
+		return err
 	}
 
 	topic := client.Topic(topicName)
-
-	msg := &pubsub.Message{
+	if _, err := topic.Publish(ctx, &pubsub.Message{
 		Data:       payloadData,
 		Attributes: attr,
+	}).Get(ctx); err != nil {
+		return fmt.Errorf("error sending the payloadData: %w", err)
 	}
-
-	if _, err := topic.Publish(ctx, msg).Get(ctx); err != nil {
-		return fmt.Errorf("there was an error sending the payloadData: %w", err)
-	}
-
 	return nil
 }
 
 func PushWithOrderingKey(ctx context.Context, project string, topicName string, payloadData []byte, attr map[string]string, OrderingKey string) error {
-
-	client, err := pubsub.NewClient(ctx, project)
+	client, err := getClient(ctx, project)
 	if err != nil {
-		return fmt.Errorf("there was an error creating pub/sub client: %w", err)
+		return err
 	}
 
 	topic := client.Topic(topicName)
 	topic.EnableMessageOrdering = true
 
-	msg := &pubsub.Message{
+	if _, err := topic.Publish(ctx, &pubsub.Message{
 		Data:        payloadData,
 		Attributes:  attr,
 		OrderingKey: OrderingKey,
+	}).Get(ctx); err != nil {
+		return fmt.Errorf("error sending the payloadData: %w", err)
 	}
-
-	if _, err := topic.Publish(ctx, msg).Get(ctx); err != nil {
-		return fmt.Errorf("there was an error sending the payloadData: %w", err)
-	}
-
 	return nil
 }
