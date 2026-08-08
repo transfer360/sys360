@@ -37,14 +37,6 @@ func UpdateClientOnSearch(ctx context.Context, sref string, issuer registered_is
 
 	defer client.Close()
 
-	clientInfo := struct {
-		ClientID string `json:"client_id"`
-		IssuerID string `json:"issuer_id"`
-	}{
-		ClientID: issuer.T360ID,
-		IssuerID: issuer.Issuer,
-	}
-
 	itr := client.Collection("searches").Where("sref", "==", sref).Where("result.is_hirer_vehicle", "==", true).Documents(ctx)
 
 	documentID := ""
@@ -67,12 +59,19 @@ func UpdateClientOnSearch(ctx context.Context, sref string, issuer registered_is
 		return fmt.Errorf("%w [%s]", ErrorSearchNotFound, sref)
 	}
 
-	_, err = client.Collection("searches").Doc(documentID).Update(ctx, []firestore.Update{
-		{
-			Path:  "client",
-			Value: clientInfo,
-		},
-	})
+	// Update the client fields individually: updating "client" as a whole would
+	// delete every other key in the map, including software_id which downstream
+	// services need to resolve the issuer's datetime strategy.
+	updates := []firestore.Update{
+		{Path: "client.clientid", Value: issuer.T360ID},
+		{Path: "client.issuer_id", Value: issuer.T360ID},
+	}
+
+	if issuer.SoftwareProvider > 0 {
+		updates = append(updates, firestore.Update{Path: "client.software_id", Value: issuer.SoftwareProvider})
+	}
+
+	_, err = client.Collection("searches").Doc(documentID).Update(ctx, updates)
 
 	if err != nil {
 		log.Error("UpdateClientOnSearch:", err)
@@ -85,7 +84,7 @@ func UpdateClientOnSearch(ctx context.Context, sref string, issuer registered_is
 
 	newi := sys_updates.ChangeIssuer{
 		Sref:     sref,
-		ClientID: clientInfo.ClientID,
+		ClientID: issuer.T360ID,
 	}
 
 	err = newi.Update(ctx, fmt.Sprintf("sys360:UpdateClientOnSearch:%s", sref))
