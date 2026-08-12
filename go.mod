@@ -3,7 +3,7 @@ module github.com/transfer360/sys360
 go 1.25.0
 
 require (
-	cloud.google.com/go/firestore v1.24.0
+	cloud.google.com/go/firestore v1.25.0
 	cloud.google.com/go/pubsub v1.51.0
 	github.com/google/uuid v1.6.0
 	github.com/joonix/log v0.0.0-20230221083239-7988383bab32
