@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/pubsub v1.51.0
 	github.com/google/uuid v1.6.0
 	github.com/joonix/log v0.0.0-20230221083239-7988383bab32
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	google.golang.org/api v0.292.0
 )
