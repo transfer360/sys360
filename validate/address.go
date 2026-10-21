@@ -73,13 +73,13 @@ func BadAddressLookUp(ctx context.Context, companyName string, PostCode string) 
 			if errors.Is(err, iterator.Done) {
 				break
 			} else {
-				log.Errorln("BadAddress: %v", err)
+				log.Errorf("BadAddress: %v", err)
 				return addr, err
 			}
 		} else {
 			err = doc.DataTo(&baddr)
 			if err != nil {
-				log.Errorln("BadAddress: %v", err)
+				log.Errorf("BadAddress: %v", err)
 				return addr, err
 			} else {
 				badAddressFound = true
